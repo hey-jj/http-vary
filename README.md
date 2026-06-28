@@ -32,7 +32,7 @@ assert_eq!(append("Accept", "accEPT").unwrap(), "Accept");
 assert_eq!(append("Accept, Accept-Encoding", "*").unwrap(), "*");
 ```
 
-A field can be one name, a comma separated list, or a slice of names.
+A field can be one name, a comma separated list, or a `Vec` of names.
 
 ```rust
 use http_vary::append;
