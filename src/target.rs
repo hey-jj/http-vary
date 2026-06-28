@@ -1,5 +1,7 @@
 //! The mutator: read a target's `Vary` header, append fields, write it back.
 
+use std::borrow::Cow;
+
 use crate::append::append;
 use crate::error::VaryError;
 use crate::field::Field;
@@ -13,8 +15,11 @@ pub trait VaryTarget {
     /// Return the current `Vary` value, or `None` when it is unset.
     ///
     /// A multi-valued header is joined into one string with `", "` so it reads
-    /// like a single `Vary` value.
-    fn get_vary(&self) -> Option<String>;
+    /// like a single `Vary` value. The return is a [`Cow`] so an implementer
+    /// backed by a stored string can borrow it, and one that must join several
+    /// values can return the owned join. [`vary`] reads it without forcing a
+    /// clone.
+    fn vary(&self) -> Option<Cow<'_, str>>;
 
     /// Set the `Vary` header to `value`, replacing any current value.
     fn set_vary(&mut self, value: String);
@@ -43,7 +48,7 @@ pub trait VaryTarget {
 /// assert_eq!(res.vary(), Some("Origin, User-Agent"));
 /// ```
 pub fn vary<T: VaryTarget + ?Sized>(res: &mut T, field: impl Into<Field>) -> Result<(), VaryError> {
-    let header = res.get_vary().unwrap_or_default();
+    let header = res.vary().unwrap_or(Cow::Borrowed(""));
     let val = append(&header, field)?;
     if !val.is_empty() {
         res.set_vary(val);
@@ -97,8 +102,8 @@ impl HeaderStore {
 }
 
 impl VaryTarget for HeaderStore {
-    fn get_vary(&self) -> Option<String> {
-        self.vary.clone()
+    fn vary(&self) -> Option<Cow<'_, str>> {
+        self.vary.as_deref().map(Cow::Borrowed)
     }
 
     fn set_vary(&mut self, value: String) {
