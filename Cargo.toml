@@ -1,0 +1,10 @@
+[package]
+name = "http-vary"
+version = "0.1.0"
+edition = "2021"
+description = "append/dedup fields onto an HTTP Vary response header"
+license = "MIT"
+repository = "https://github.com/hey-jj/http-vary"
+readme = "README.md"
+
+[dependencies]
