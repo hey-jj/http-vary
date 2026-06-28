@@ -11,7 +11,13 @@
 ///   space is therefore invalid.
 ///
 /// Build a `Field` with [`From`]. A `&str` or `String` becomes [`Field::One`].
-/// A slice, array, or `Vec` of strings becomes [`Field::List`].
+/// A `Vec<&str>` or `Vec<String>` becomes [`Field::List`]. Construct the variant
+/// directly for any other shape.
+///
+/// The two variants are the complete set of field shapes. A `Vary` value is
+/// either one already-formatted string or a list of separate names. No third
+/// shape is planned, so the enum stays open to direct matching without a
+/// wildcard arm.
 ///
 /// ```
 /// use http_vary::{append, Field};
@@ -46,12 +52,6 @@ impl From<String> for Field {
     }
 }
 
-impl From<&String> for Field {
-    fn from(value: &String) -> Self {
-        Field::One(value.clone())
-    }
-}
-
 impl From<Vec<String>> for Field {
     fn from(value: Vec<String>) -> Self {
         Field::List(value)
@@ -61,23 +61,5 @@ impl From<Vec<String>> for Field {
 impl From<Vec<&str>> for Field {
     fn from(value: Vec<&str>) -> Self {
         Field::List(value.into_iter().map(str::to_owned).collect())
-    }
-}
-
-impl From<&[&str]> for Field {
-    fn from(value: &[&str]) -> Self {
-        Field::List(value.iter().map(|s| (*s).to_owned()).collect())
-    }
-}
-
-impl<const N: usize> From<[&str; N]> for Field {
-    fn from(value: [&str; N]) -> Self {
-        Field::List(value.iter().map(|s| (*s).to_owned()).collect())
-    }
-}
-
-impl<const N: usize> From<&[&str; N]> for Field {
-    fn from(value: &[&str; N]) -> Self {
-        Field::List(value.iter().map(|s| (*s).to_owned()).collect())
     }
 }

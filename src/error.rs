@@ -7,6 +7,7 @@ use core::fmt;
 /// Each variant carries one of the exact messages the validation rules
 /// produce, so callers can match on the cause or print it directly.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum VaryError {
     /// The field argument held no field name.
     ///
