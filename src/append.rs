@@ -37,7 +37,7 @@ fn is_valid_field_name(name: &str) -> bool {
 /// collapses the whole value to `"*"`.
 ///
 /// `header` is the current `Vary` value and may be empty. `field` is one name,
-/// a comma separated list of names, or a slice of names. See [`Field`] for how
+/// a comma separated list of names, or a `Vec` of names. See [`Field`] for how
 /// each shape is read.
 ///
 /// # Steps
@@ -50,6 +50,10 @@ fn is_valid_field_name(name: &str) -> bool {
 ///
 /// Validation runs before the wildcard checks, so an invalid name fails even
 /// when a `"*"` is also present.
+///
+/// The return is always a fresh `String`, including the no-op merge where every
+/// field is already present. A caller on a hot path should not expect the input
+/// to be borrowed back.
 ///
 /// # Errors
 ///
@@ -98,7 +102,10 @@ pub fn append(header: &str, field: impl Into<Field>) -> Result<String, VaryError
 
     // Lowercased current entries, used only for case-insensitive dedup.
     let lower_header = header.to_ascii_lowercase();
-    let mut vals: Vec<String> = parse(&lower_header).iter().map(|s| s.to_string()).collect();
+    let mut vals: Vec<String> = parse(&lower_header)
+        .into_iter()
+        .map(str::to_owned)
+        .collect();
 
     // A wildcard on either side collapses the whole value.
     if fields.contains(&"*") || vals.iter().any(|v| v == "*") {
