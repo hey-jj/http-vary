@@ -48,6 +48,37 @@ fn rejects_space_separator() {
     );
 }
 
+#[test]
+fn invalid_name_leaves_target_untouched() {
+    // A failed merge must not write the header. The store stays as it was.
+    let mut res = HeaderStore::with_vary("Accept");
+    assert_eq!(
+        vary(&mut res, "invalid:header"),
+        Err(VaryError::InvalidFieldName)
+    );
+    assert_eq!(res.vary(), Some("Accept"));
+}
+
+#[test]
+fn rejects_del_control_char() {
+    let mut res = HeaderStore::new();
+    assert_eq!(
+        vary(&mut res, "a\u{007f}b"),
+        Err(VaryError::InvalidFieldName)
+    );
+    assert_eq!(res.vary(), None);
+}
+
+#[test]
+fn rejects_high_byte() {
+    let mut res = HeaderStore::new();
+    assert_eq!(
+        vary(&mut res, "a\u{0080}b"),
+        Err(VaryError::InvalidFieldName)
+    );
+    assert_eq!(res.vary(), None);
+}
+
 // when no Vary
 
 #[test]
@@ -131,6 +162,15 @@ fn existing_array_does_not_duplicate() {
     let mut res = HeaderStore::with_vary_list(["Accept", "Accept-Encoding"]);
     vary(&mut res, vec!["accept", "origin"]).unwrap();
     assert_eq!(res.vary(), Some("Accept, Accept-Encoding, origin"));
+}
+
+#[test]
+fn existing_array_with_wildcard_collapses() {
+    // A multi-valued header that already holds "*" collapses to "*" after the
+    // join, the same as a single "*" header.
+    let mut res = HeaderStore::with_vary_list(["Accept", "*"]);
+    vary(&mut res, "Origin").unwrap();
+    assert_eq!(res.vary(), Some("*"));
 }
 
 // when Vary: *

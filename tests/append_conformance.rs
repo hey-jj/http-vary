@@ -211,3 +211,68 @@ fn accepts_full_tchar_set() {
 fn wildcard_dedup_is_stable() {
     assert_eq!(append("Accept, *", "*").unwrap(), "*");
 }
+
+// The accumulator is the raw header string, not a value rebuilt from parsed
+// tokens. Existing spacing and stray separators carry through untouched, and
+// only each newly added field gets a ", " prefix. These rows pin that. A merge
+// that canonicalized the existing value would diverge on every one of them.
+
+#[test]
+fn keeps_header_spacing_verbatim() {
+    // header is two spaces; the new field appends after a literal ", ".
+    assert_eq!(append("  ", "Origin").unwrap(), "  , Origin");
+}
+
+#[test]
+fn keeps_bare_comma_header_verbatim() {
+    assert_eq!(append(",", "Origin").unwrap(), ",, Origin");
+}
+
+#[test]
+fn keeps_tight_comma_in_existing_header() {
+    // No space after the existing comma stays missing; the new field still
+    // joins with ", ".
+    assert_eq!(append("Accept,Origin", "X").unwrap(), "Accept,Origin, X");
+}
+
+#[test]
+fn keeps_space_before_existing_comma() {
+    assert_eq!(append("Accept ,Origin", "X").unwrap(), "Accept ,Origin, X");
+}
+
+#[test]
+fn keeps_leading_space_in_existing_header() {
+    assert_eq!(append(" Accept", "X").unwrap(), " Accept, X");
+}
+
+#[test]
+fn dedup_trims_for_compare_but_keeps_header_trailing_space() {
+    // The trailing space is trimmed only for the dedup compare. "Accept" dups
+    // the existing token, so nothing is added and the trailing space remains.
+    assert_eq!(append("Accept ", "Accept").unwrap(), "Accept ");
+}
+
+// The header == "*" short-circuit returns "*" only after field validation
+// passes. With a valid field and an array, the existing wildcard wins.
+
+#[test]
+fn existing_wildcard_with_valid_field() {
+    assert_eq!(append("*", "Accept-Encoding").unwrap(), "*");
+}
+
+#[test]
+fn existing_wildcard_with_empty_list() {
+    let empty: Vec<&str> = Vec::new();
+    assert_eq!(append("*", empty).unwrap(), "*");
+}
+
+#[test]
+fn existing_wildcard_embedded_in_multivalue_header() {
+    // A wildcard anywhere in the existing list collapses the result.
+    assert_eq!(append("Accept, *, Accept-Encoding", "Origin").unwrap(), "*");
+}
+
+#[test]
+fn intra_array_dedup_across_three_entries() {
+    assert_eq!(append("", vec!["a", "A", "a"]).unwrap(), "a");
+}

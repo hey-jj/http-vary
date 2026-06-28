@@ -77,6 +77,31 @@ fn validation_runs_before_wildcard() {
     );
 }
 
+#[test]
+fn validation_runs_before_existing_wildcard_short_circuit() {
+    // header == "*" returns "*" only after every field name is validated. A bad
+    // name still fails first.
+    assert_eq!(append("*", "bad header"), Err(VaryError::InvalidFieldName));
+}
+
+#[test]
+fn empty_field_check_runs_before_existing_wildcard() {
+    // An empty single field is required even when the existing header is "*".
+    assert_eq!(append("*", ""), Err(VaryError::FieldRequired));
+}
+
+#[test]
+fn rejects_double_comma_field() {
+    // "a,,b" parses to ["a", "", "b"]; the empty middle token fails the grammar.
+    assert_eq!(append("", "a,,b"), Err(VaryError::InvalidFieldName));
+}
+
+#[test]
+fn rejects_array_element_that_is_empty() {
+    // A list entry that is the empty string is not a valid token.
+    assert_eq!(append("", vec![""]), Err(VaryError::InvalidFieldName));
+}
+
 // These mirror the does-not-throw cases. Each must succeed.
 
 #[test]
