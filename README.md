@@ -57,8 +57,8 @@ assert_eq!(res.vary(), Some("Accept, Origin"));
 - Names are validated against the RFC 7230 `token` grammar. A name with a colon,
   space, control byte, or any byte at or above `0x80` is rejected.
 - Comparison is case-insensitive. Output keeps the case of each name as written.
-- A single string field is split on commas and spaces. A list entry is taken
-  verbatim and never split again.
+- A single string field is split on commas, with surrounding ASCII spaces
+  trimmed. A list entry is taken verbatim and never split again.
 - A `*` on either side collapses the value to `"*"`. Validation runs first, so a
   bad name fails even when a `*` is present.
 - An empty list is a no-op. Through `vary`, an empty result leaves the header

@@ -4,8 +4,9 @@
 ///
 /// The two shapes parse differently, matching how a `Vary` value is built.
 ///
-/// - [`Field::One`] holds a single string. It is split on commas and spaces,
-///   so it can carry a whole `Vary` value like `"Accept, Accept-Encoding"`.
+/// - [`Field::One`] holds a single string. It is split on commas, with
+///   surrounding ASCII spaces trimmed, so it can carry a whole `Vary` value
+///   like `"Accept, Accept-Encoding"`.
 /// - [`Field::List`] holds field names that are already separated. Each entry
 ///   is taken as one field and is never split again. An entry with a comma or
 ///   space is therefore invalid.
@@ -34,7 +35,7 @@
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Field {
-    /// A single string, parsed as a comma and space separated `Vary` value.
+    /// A single string, split on commas, with surrounding ASCII spaces trimmed.
     One(String),
     /// Already separated field names, each used verbatim.
     List(Vec<String>),

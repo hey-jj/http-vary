@@ -74,7 +74,8 @@ fn is_valid_field_name(name: &str) -> bool {
 pub fn append(header: &str, field: impl Into<Field>) -> Result<String, VaryError> {
     let field = field.into();
 
-    // Collect the field names. A single string is split on commas and spaces.
+    // Collect the field names. A single string is split on commas, with
+    // surrounding ASCII spaces trimmed.
     // A list is used verbatim, so its entries are never split again.
     let fields: Vec<&str> = match &field {
         Field::One(s) => {
