@@ -1,6 +1,6 @@
 [package]
 name = "http-vary"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 rust-version = "1.56"
 description = "Append and de-duplicate field names on an HTTP Vary response header"
